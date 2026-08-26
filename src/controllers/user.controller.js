@@ -15,22 +15,34 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation
   // return res
   const { fullName, email, username, password } = req.body;
-  console.log(email, password);
+  // console.log(email, password);
 
   if (
+    // here , we are not use map() because map return new  [treu,false,..] array but some method check if atleast one element satisfy the condition then it's return treu
     [fullName, email, username, password].some((field) => field?.trim() == "")
   ) {
     throw new ApiError(404, "All field are required");
   }
 
   const existedUser = await User.findOne({ $or: [{ username }, { email }] });
-  console.log(user);
+  // console.log(user);
   if (existedUser) {
-    throw ApiError(409, "User with email or usernaem is already exists");
+    throw new ApiError(409, "User with email or usernaem is already exists");
   }
   //  this file is still on serner not on cloudinary
+
+  // console.log(req.files);f
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.cover[0]?.path;
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
+
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required.");
   }
@@ -47,22 +59,21 @@ const registerUser = asyncHandler(async (req, res) => {
     avatar: avatar.url,
     email,
     coverImage: coverImage?.url || "",
-    password,             
+    password,
     username: username.toLowerCase(),
   });
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  )
-  if (createdUser) {
-    throw new ApiError(500,"somthing went wrong while registring user..")
+    "-password -refreshToken",
+  );
+  if (!createdUser) {
+    throw new ApiError(500, "somthing went wrong while registring user..");
   }
 
-  return res.status(201).json(
-    new ApiResponse(200,createdUser,"UserRegister successfully")
-  )
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createdUser, "User Register successfully"));
 
   // ApiResponse()
-
 });
 
 export { registerUser };

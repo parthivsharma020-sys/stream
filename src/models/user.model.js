@@ -25,7 +25,7 @@ const userSchema = new Schema(
       trim: true,
       index: true,
     },
-    avater: {
+    avatar: {
       type: String, // URL of the user's avatar image cloudinary
       required: true,
     },
@@ -51,9 +51,9 @@ const userSchema = new Schema(
   },
 );
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   this.password =await bcrypt.hash(this.password, 10);
-  next();
+  // next(); in newer when we use asynnc mongoose no need to use next() they use internaly 
 });
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
